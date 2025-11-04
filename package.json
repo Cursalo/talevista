@@ -38,7 +38,19 @@
     "tailwindcss-animate": "^1.0.7",
     "bcryptjs": "^2.4.3",
     "sharp": "^0.33.5",
-    "date-fns": "^4.1.0"
+    "date-fns": "^4.1.0",
+    "jspdf": "^2.5.2",
+    "html2canvas": "^1.4.1",
+    "elevenlabs-api": "^1.0.4",
+    "recharts": "^2.12.7",
+    "react-image-crop": "^11.0.7",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "@radix-ui/react-avatar": "^1.1.1",
+    "@radix-ui/react-progress": "^1.1.0",
+    "@radix-ui/react-slider": "^1.2.1",
+    "@radix-ui/react-switch": "^1.1.1",
+    "react-dropzone": "^14.2.10"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
