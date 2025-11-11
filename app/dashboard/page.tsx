@@ -77,6 +77,18 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-4 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20" onClick={() => router.push("/story/live-storybook")}>
+            <CardHeader>
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mb-4 animate-pulse">
+                <span className="text-2xl">📚</span>
+              </div>
+              <CardTitle className="text-purple-600">Live Storybook! 🎤✨</CardTitle>
+              <CardDescription>
+                Tell your story with your voice and watch it come to life! Perfect for kids!
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push("/story/create")}>
             <CardHeader>
               <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center mb-4">
