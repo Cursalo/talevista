@@ -6,13 +6,18 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, Image as ImageIcon, Sparkles, BookOpen } from "lucide-react";
+import { ArrowLeft, Plus, Image as ImageIcon, Sparkles, BookOpen, Users } from "lucide-react";
 import Link from "next/link";
+import { ExportButton } from "@/components/story/export-button";
+import { ShareDialog } from "@/components/story/share-dialog";
+import { NarrationPlayer } from "@/components/story/narration-player";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function StoryPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { toast } = useToast();
   const [story, setStory] = useState<any>(null);
   const [chapters, setChapters] = useState<any[]>([]);
   const [characters, setCharacters] = useState<any[]>([]);
@@ -20,6 +25,7 @@ export default function StoryPage() {
   const [generatingChapter, setGeneratingChapter] = useState(false);
   const [chapterPrompt, setChapterPrompt] = useState("");
   const [showChapterForm, setShowChapterForm] = useState(false);
+  const [expandedChapter, setExpandedChapter] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -53,6 +59,11 @@ export default function StoryPage() {
       }
     } catch (error) {
       console.error("Error fetching story data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load story data",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -78,11 +89,44 @@ export default function StoryPage() {
       setChapters([...chapters, data.chapter]);
       setChapterPrompt("");
       setShowChapterForm(false);
+
+      toast({
+        title: "Success!",
+        description: "Chapter generated successfully",
+        variant: "success",
+      });
     } catch (error) {
       console.error("Error generating chapter:", error);
-      alert("Failed to generate chapter. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to generate chapter. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setGeneratingChapter(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    try {
+      const response = await fetch(`/api/story/${params.storyId}/publish`, {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setStory({ ...story, published: true });
+        toast({
+          title: "Published!",
+          description: "Your story is now public",
+          variant: "success",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to publish story",
+        variant: "destructive",
+      });
     }
   };
 
@@ -116,31 +160,48 @@ export default function StoryPage() {
             Back to Dashboard
           </Link>
           <div className="flex gap-2">
+            {!story.published && (
+              <Button onClick={handlePublish} variant="default">
+                Publish Story
+              </Button>
+            )}
+            <ShareDialog
+              storyId={story.id}
+              storyTitle={story.title}
+              storyDescription={story.description}
+            />
             <Button variant="outline" size="sm">
-              <ImageIcon className="w-4 h-4 mr-2" />
-              Generate Cover
+              <Users className="w-4 h-4 mr-2" />
+              Collaborate
             </Button>
-            <Button variant="outline" size="sm">
-              Export PDF
-            </Button>
+            <ExportButton storyId={story.id} storyTitle={story.title} />
           </div>
         </div>
       </nav>
 
       <main className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">{story.title}</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            {story.description}
-          </p>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold mb-2">{story.title}</h1>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                {story.description}
+              </p>
+            </div>
+            {story.published && (
+              <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full text-sm">
+                Published
+              </span>
+            )}
+          </div>
           <div className="flex gap-2">
             {story.genre && (
-              <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full text-sm">
+              <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full text-sm capitalize">
                 {story.genre}
               </span>
             )}
             {story.style && (
-              <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+              <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-sm capitalize">
                 {story.style}
               </span>
             )}
@@ -164,7 +225,7 @@ export default function StoryPage() {
                       />
                     )}
                     <h3 className="font-semibold">{character.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 capitalize">
                       {character.role}
                     </p>
                   </div>
@@ -239,7 +300,7 @@ export default function StoryPage() {
               </Button>
             </Card>
           ) : (
-            chapters.map((chapter, index) => (
+            chapters.map((chapter) => (
               <Card key={chapter.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
@@ -249,8 +310,16 @@ export default function StoryPage() {
                       </div>
                       <CardTitle>{chapter.title}</CardTitle>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      <ImageIcon className="w-4 h-4" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setExpandedChapter(
+                          expandedChapter === chapter.id ? null : chapter.id
+                        )
+                      }
+                    >
+                      {expandedChapter === chapter.id ? "Hide" : "Show"}
                     </Button>
                   </div>
                 </CardHeader>
@@ -262,9 +331,22 @@ export default function StoryPage() {
                       className="w-full h-64 object-cover rounded-lg mb-4"
                     />
                   )}
-                  <div className="prose dark:prose-invert max-w-none">
-                    <p className="whitespace-pre-wrap">{chapter.content}</p>
-                  </div>
+
+                  {expandedChapter === chapter.id && (
+                    <>
+                      <div className="prose dark:prose-invert max-w-none mb-6">
+                        <p className="whitespace-pre-wrap">{chapter.content}</p>
+                      </div>
+
+                      {/* Voice Narration */}
+                      <div className="mt-6">
+                        <NarrationPlayer
+                          text={chapter.content}
+                          chapterId={chapter.id}
+                        />
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             ))
